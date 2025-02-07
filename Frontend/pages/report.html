@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Report - Office Expense Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <style>
+        body {
+            background: url(../assets/images/reportbg.jpeg) center/cover;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            backdrop-filter: blur(2px);
+            width: 100%;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .navbar-nav .nav-link {
+            font-size: 1rem;
+            margin-right: 1rem;
+        }
+
+        .navbar-nav .nav-link.active {
+            color: skyblue;
+            font-weight: bold;
+        }
+
+        .container {
+            flex: 1;
+            /* Ensures the container takes up remaining space */
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <div class="container">
+            <a class="navbar-brand" href="Home.html">Office Expenses</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="Home.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="expense.html">Expenses</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="report.html">Report</a></li>
+                    <li class="nav-item"><a class="nav-link " href="Contact.html">Contact</a></li>
+                    <li class="nav-item">
+                        <a class="btn btn-outline-info" href="Contact.html">Join Us</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2 class="text-center">Expense Report</h2>
+        <div class="mb-3">
+            <label for="filterCategory" class="form-label">Filter by Category:</label>
+            <select id="filterCategory" class="form-select">
+                <option value="">All Categories</option>
+                <option value="Food">Food</option>
+                <option value="Travel">Travel</option>
+                <option value="Conference">Conference</option>
+                <option value="Office Supplies">Office Supplies</option>
+                <option value="Transportation">Transportation</option>
+                <option value="Home Office">Home Office</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <button id="downloadReportBtn" class="btn btn-success mb-3">Download Report</button>
+        <table id="expenseTable" class="table table-bordered mt-4">
+            <thead class="table-dark">
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Category</th>
+                    <th>Other Category</th>
+                    <th>Amount</th>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+            <tbody id="expenseTableBody">
+                <!-- Data will be inserted here dynamically -->
+            </tbody>
+        </table>
+    </div>
+    <footer class="text-center py-3 mt-4 w-100"
+        style="background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(10px); margin-top: 50px; bottom: 0;">
+        <p class="mb-0">&copy; 2025 Office Expense Tracker. All rights reserved.</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3q7Wj1FzLVcON52Ra1ovlFXIzZIrVMbI",
+            authDomain: "office-expenses-de258.firebaseapp.com",
+            databaseURL: "https://office-expenses-de258-default-rtdb.firebaseio.com",
+            projectId: "office-expenses-de258",
+            storageBucket: "office-expenses-de258.appspot.com",
+            messagingSenderId: "661570586036",
+            appId: "1:661570586036:web:938fb23576722a81e65ee1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        function fetchExpenses() {
+            const expensesRef = ref(db, "expenses");
+            onValue(expensesRef, (snapshot) => {
+                const tableBody = document.getElementById("expenseTableBody");
+                tableBody.innerHTML = ""; // Clear existing data
+                let totalAmount = 0;
+                const filterCategory = document.getElementById("filterCategory").value;
+                snapshot.forEach((childSnapshot) => {
+                    const data = childSnapshot.val();
+                    if (!filterCategory || data.category === filterCategory) {
+                        totalAmount += data.amount;
+                        const formattedDate = new Date(data.date_time).toISOString().slice(0, 16);
+                        const row = `<tr>
+                                        <td>${data.emp_id}</td>
+                                        <td>${data.category}</td>
+                                        <td>${data.other_category || '-'}</td>
+                                        <td>₹${data.amount.toFixed(2)}</td>
+                                        <td>${formattedDate}</td>
+                                    </tr>`;
+                        tableBody.innerHTML += row;
+                    }
+                });
+                document.getElementById("expenseTableBody").innerHTML += `<tr class='fw-bold'><td colspan='3'>Total</td><td>₹${totalAmount.toFixed(2)}</td><td></td></tr>`;
+            });
+        }
+
+        document.getElementById("filterCategory").addEventListener("change", fetchExpenses);
+        fetchExpenses();
+
+        function downloadReport() {
+            const table = document.getElementById("expenseTable");
+            const ws = XLSX.utils.table_to_sheet(table);
+            ws["!cols"] = [{}, {}, {}, {}, { wch: 20 }]; // Ensure proper width for date column
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Expense Report");
+            XLSX.writeFile(wb, "Expense_Report.xlsx");
+        }
+
+        document.getElementById("downloadReportBtn").addEventListener("click", downloadReport);
+    </script>
+</body>
+
+</html>

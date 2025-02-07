@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Expense - Office Expense Tracker</title>
+    <link rel="icon" type="image/png" href="../assets/favicon.jpeg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-image: url('https://storage.googleapis.com/a1aa/image/bHETiTQf-oYmJCtMzYkwNMelTHHK6xbvv-zcigBA8vE.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .overlay {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: -1;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .navbar-nav .nav-link {
+            font-size: 1rem;
+            margin-right: 1rem;
+        }
+
+        .navbar-nav .nav-link.active {
+            color: skyblue;
+            font-weight: bold;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-primary {
+            width: 100%;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="overlay"></div>
+
+    <nav class="navbar navbar-expand-lg bg-white shadow fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">Office Expenses</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="Home.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="expense.html">Expenses</a></li>
+                    <li class="nav-item"><a class="nav-link" href="report.html">Report</a></li>
+                    <li class="nav-item"><a class="nav-link" href="Contact.html">Contact</a></li>
+                </ul>
+                <a class="btn btn-outline-info ms-3" href="Contact.html">Join Us</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="col-md-6 col-lg-5 form-container">
+            <h2 class="text-center fw-bold mb-3">Submit Expense</h2>
+            <form id="expenseForm">
+                <div class="mb-3">
+                    <label for="empId" class="form-label">Employee ID</label>
+                    <input type="text" id="empId" class="form-control" placeholder="Enter Your EMP ID" required>
+                </div>
+                <div class="mb-3">
+                    <label for="fromDate" class="form-label">Date & Time</label>
+                    <input type="datetime-local" id="fromDate" class="form-control" required min="2000-01-01T00:00"
+                        max="2099-12-31T23:59">
+                </div>
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Amount</label>
+                    <input type="number" id="amount" class="form-control" placeholder="Enter Amount" required>
+                </div>
+                <div class="mb-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select id="category" class="form-select" required onchange="toggleOtherCategory()">
+                        <option value="" disabled selected>Select Category</option>
+                        <option value="Food">Food</option>
+                        <option value="Travel">Travel</option>
+                        <option value="Conference">Conference</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Home Office">Home Office</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Hidden input field for "Other" category -->
+                <div class="mb-3" id="otherCategoryDiv" style="display: none;">
+                    <label for="otherCategory" class="form-label">Specify Category</label>
+                    <input type="text" id="otherCategory" class="form-control" placeholder="Enter category">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit Expense</button>
+            </form>
+        </div>
+    </section>
+
+    <footer class="text-center py-3 mt-4 w-100"
+        style="background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(10px); position: fixed; bottom: 0;">
+        <p class="mb-0">&copy; 2025 Office Expense Tracker. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getDatabase, ref, push } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3q7Wj1FzLVcON52Ra1ovlFXIzZIrVMbI",
+            authDomain: "office-expenses-de258.firebaseapp.com",
+            databaseURL: "https://office-expenses-de258-default-rtdb.firebaseio.com",
+            projectId: "office-expenses-de258",
+            storageBucket: "office-expenses-de258.appspot.com",
+            messagingSenderId: "661570586036",
+            appId: "1:661570586036:web:938fb23576722a81e65ee1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("category").addEventListener("change", toggleOtherCategory);
+
+            document.getElementById("expenseForm").addEventListener("submit", (e) => {
+                e.preventDefault();
+
+                const expenseData = {
+                    emp_id: document.getElementById("empId").value,
+                    category: document.getElementById("category").value,
+                    other_category: document.getElementById("otherCategory").value || "",
+                    amount: parseFloat(document.getElementById("amount").value),
+                    date_time: document.getElementById("fromDate").value
+                };
+
+                push(ref(db, "expenses"), expenseData)
+                    .then(() => {
+                        alert("Expense submitted successfully!");
+                        document.getElementById("expenseForm").reset();
+                        toggleOtherCategory(); // Ensure "Other" field resets properly
+                    })
+                    .catch((error) => alert("Error: " + error.message));
+            });
+        });
+
+        function toggleOtherCategory() {
+            let category = document.getElementById("category").value;
+            let otherCategoryDiv = document.getElementById("otherCategoryDiv");
+            let otherCategoryInput = document.getElementById("otherCategory");
+
+            otherCategoryDiv.style.display = category === "Other" ? "block" : "none";
+            if (category !== "Other") otherCategoryInput.value = "";
+        }
+    </script>
+</body>
+
+</html>
